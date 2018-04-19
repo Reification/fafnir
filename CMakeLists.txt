@@ -20,8 +20,6 @@ else()
     message(WARNING "'${CMAKE_CXX_COMPILER_ID}' not recognized - C++17 standard not enabled!")
 endif()
 
-message(STATUS ${CMAKE_CXX_COMPILER})
-
 if(BUILD_INJECTION_DLL)
   add_definitions(-DFAFNIR_USE_INJECTION=1)
 else()
