@@ -3,7 +3,11 @@
 
 #include <Windows.h>
 
-#define FAFNIR_ENABLE_SPAM 1
+#if defined(_DEBUG)
+# define FAFNIR_ENABLE_SPAM 1
+#else
+# define FAFNIR_ENABLE_SPAM 0
+#endif
 
 #if FAFNIR_ENABLE_SPAM
 # include <iostream>
