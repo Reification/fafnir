@@ -147,13 +147,15 @@ function Install ($arch) {
         }
         Copy-Item "$assets\clang\Toolset.targets" "$targetPath"
         $content = (Get-Content -Encoding UTF8 "$assets\clang\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
-        Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8
-        if (!(Test-Path "$targetPath\bin")) {
-            New-Item -ItemType Directory "$targetPath\bin"
+        Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
+        if (Test-Path $bin) {
+            if (!(Test-Path "$targetPath\bin")) {
+                New-Item -ItemType Directory "$targetPath\bin"
+            }
+            Copy-Item $bin "$targetPath\bin\"
+            Copy-Item $dll "$targetPath\bin\"
+            [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang.exe");
         }
-        Copy-Item $bin "$targetPath\bin\"
-        Copy-Item $dll "$targetPath\bin\"
-        [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang.exe");
     }
 
     if ($ClangClToolsetName -ne "") {
@@ -164,14 +166,6 @@ function Install ($arch) {
         Copy-Item "$assets\clang-cl\Toolset.targets" "$targetPath"
         $content = (Get-Content -Encoding UTF8 "$assets\clang-cl\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
         Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
-        if (Test-Path $bin) {
-            if (!(Test-Path "$targetPath\msbuild-bin")) {
-                New-Item -ItemType Directory "$targetPath\msbuild-bin"
-            }
-            Copy-Item $bin "$targetPath\msbuild-bin\cl.exe"
-            Copy-Item $dll "$targetPath\msbuild-bin\"
-            [IO.File]::WriteAllText("$targetPath\msbuild-bin\.target","$LLVMDirectory\msbuild-bin\cl.exe");
-        }
     }
 }
 
