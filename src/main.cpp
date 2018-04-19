@@ -2,8 +2,10 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+
 #include <vector>
 #include <sstream>
+#include <functional>
 
 #include <Windows.h>
 
@@ -60,11 +62,12 @@ file_type get_file_type(std::istream& in) noexcept {
     return file_type::utf8;
 }
 
-template<auto f>
-std::experimental::filesystem::path read_path_impl(std::istream& in) noexcept {
+using read_func = std::function<char32_t ( std::istream& in )>;
+
+std::experimental::filesystem::path read_path_impl(const read_func& rf, std::istream& in) noexcept {
     std::ostringstream ss;
 
-    for (auto ch = f(in); ch != std::char_traits<char32_t>::eof(); ch = f(in)) {
+    for (auto ch = rf(in); ch != std::char_traits<char32_t>::eof(); ch = rf(in)) {
         write_utf16_stream(ss, ch);
     }
     
@@ -79,15 +82,81 @@ std::experimental::filesystem::path read_path(std::istream& in) noexcept {
         in.seekg(3);
     } else if (type == file_type::utf16_le) {
         in.seekg(2);
-        return read_path_impl<read_utf16_stream>(in);
+        return read_path_impl( &read_utf16_stream, in);
     }
-    return read_path_impl<read_utf8_stream>(in);
+    return read_path_impl( &read_utf8_stream, in);
+}
+
+std::string read_file_impl( const read_func& rf, std::istream& in ) noexcept
+{
+  std::ostringstream ss;
+
+  for ( auto ch = rf( in ); ch != std::char_traits<char32_t>::eof(); ch = rf( in ) )
+  {
+    write_utf8_stream( ss, ch );
+  }
+
+  return ss.str();
+}
+
+std::string read_file( std::istream& in ) noexcept
+{
+  auto type = get_file_type( in );
+  if ( type == file_type::utf8_with_bom )
+  {
+    in.seekg( 3 );
+  }
+  else if ( type == file_type::utf16_le )
+  {
+    in.seekg( 2 );
+    return read_file_impl( &read_utf16_stream, in );
+  }
+  return read_file_impl( &read_utf8_stream, in );
 }
 
 }
 
-int main() {
+int main(int argc, char**argv) {
     using namespace fafnir;
+
+    (void)argc; (void)argv;
+#if FAFNIR_ENABLE_SPAM
+    {
+      const char* name = strrchr(argv[0], '\\');
+      FAFNIR_SPAM( "fafnir_clang as " << (name ? (name + 1) : argv[0]) << "!\n" );
+    }
+
+    {
+      FAFNIR_SPAM( "###fafnir_args[\n" );
+      for ( int i = 1; i < argc; i++ )
+      {
+        FAFNIR_SPAM( argv[i] << "\n" );
+      }
+      FAFNIR_SPAM( "\n###]fafnir_args\n" );
+
+      for ( int i = 1; i < argc; i++ )
+      {
+        if ( argv[i][0] == '@' )
+        {
+          const char* rspPath = argv[i] + 1;
+          std::ifstream rsp( rspPath, std::ios::binary );
+
+          FAFNIR_SPAM( "###fafnir_rsp" << i << "[\n" );
+
+          if ( rsp.good() )
+          {
+            std::string rspBuf = read_file( rsp );
+            FAFNIR_SPAM( rspBuf );
+          }
+          else
+          {
+            FAFNIR_SPAM( "failed opening '" << rspPath << "'\n" );
+          }
+          FAFNIR_SPAM( "\n###]fafnir_rsp" << i << "\n" );
+        }
+      }
+    }
+#endif
 
     auto path = get_bin_path() / ".target";
     if (!std::experimental::filesystem::exists(path)) {
@@ -112,7 +181,14 @@ int main() {
         }
         ++itr;
     }
+
     std::wstring_view additional_option(L" --rsp-quoting=windows");
+
+    if ( strstr( argv[0], "link" ) )
+    {
+      additional_option = L"";
+    }
+
     std::vector<wchar_t> cmdbuf;
     auto new_cmdline = cmdline.substr(itr - cmdline.begin());
     cmdbuf.reserve(target_path.native().size() + new_cmdline.size() + additional_option.size() + 3);
@@ -124,6 +200,7 @@ int main() {
     cmdbuf.push_back(L'\0');
     STARTUPINFOW si{sizeof(si)};
     PROCESS_INFORMATION pi{};
+
     create_process_w(target_path.c_str(), cmdbuf.data(), nullptr, nullptr, true, 0, nullptr, nullptr, &si, &pi);
     const handle_ptr process{pi.hProcess};
     const handle_ptr thread{pi.hThread};

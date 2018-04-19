@@ -18,6 +18,8 @@ struct view_delete {
 };
 
 void inject(HANDLE process) {
+    FAFNIR_SPAM( "fafnir_inject()!\n" );
+
     const auto dll_path = get_dll_name();
     const auto size = (dll_path.native().size() + 1) * sizeof(wchar_t);
     const auto ptr = VirtualAllocEx(process, nullptr, size, MEM_COMMIT, PAGE_READWRITE);
@@ -37,6 +39,8 @@ const auto orig_CreateProcessW = reinterpret_cast<decltype(CreateProcessW)*>(
 const auto orig_CreateProcessA = reinterpret_cast<decltype(CreateProcessA)*>(
     GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "CreateProcessA")
 );
+
+#if 0 // never used
 const auto orig_MoveFileW = reinterpret_cast<decltype(MoveFileW)*>(
     GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "MoveFileW")
 );
@@ -55,6 +59,8 @@ const auto orig_MoveFileWithProgressW = reinterpret_cast<decltype(MoveFileWithPr
 const auto orig_MoveFileWithProgressA = reinterpret_cast<decltype(MoveFileWithProgressA)*>(
     GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "MoveFileWithProgressA")
 );
+#endif // 0
+
 const auto orig_SetFileInformationByHandle = reinterpret_cast<decltype(SetFileInformationByHandle)*>(
     GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "SetFileInformationByHandle")
 );
@@ -73,6 +79,13 @@ BOOL WINAPI create_process_w(
     LPSTARTUPINFOW startup_info,
     LPPROCESS_INFORMATION process_information
 ) {
+#if FAFNIR_ENABLE_SPAM
+  {
+    const wchar_t* name = wcsrchr( application_name, L'\\' );
+    FAFNIR_WSPAM( L"fafnir_create_process_w(" << (name ? (name + 1) : application_name) << L")\n!"; );
+  }
+#endif
+
     auto r = fafnir::orig_CreateProcessW(
         application_name,
         command_line,
@@ -110,6 +123,13 @@ BOOL WINAPI create_process_a(
     LPSTARTUPINFOA startup_info,
     LPPROCESS_INFORMATION process_information
 ) {
+#if FAFNIR_ENABLE_SPAM
+  {
+    const char* name = strrchr( application_name, '\\' );
+    FAFNIR_SPAM( "fafnir_create_process_a(" << (name ? (name + 1) : application_name) << ")\n!"; );
+  }
+#endif
+
     auto r = orig_CreateProcessA(
         application_name,
         command_line,
@@ -142,8 +162,9 @@ BOOL WINAPI set_file_information_by_handle(
     DWORD size
 ) {
     if (information_class == FileRenameInfo) {
-        auto& info = *static_cast<PFILE_RENAME_INFO>(file_information);
-        std::ofstream(info.FileName, std::ios::ate | std::ios::binary);
+        auto& info = *static_cast<PFILE_RENAME_INFO>(file_information);        
+        FAFNIR_WSPAM( L"fafnir_set_file_information_by_handle(" << info.FileName << L")\n!" );
+        std::ofstream(info.FileName, std::ios::ate | std::ios::binary).close();
     }
     return orig_SetFileInformationByHandle(file, information_class, file_information, size);
 }

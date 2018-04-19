@@ -48,7 +48,7 @@ if (!$VSInstallDir) {
 $reset = $false
 
 $DefaultToolsetName = "v140_clang_llvm"
-$DefaultClangClToolsetName = "v140_llvm"
+$DefaultClangClToolsetName = "v140_cl_llvm"
 
 do {
     if ($reset -or $LLVMDirectory -eq "") {
@@ -82,7 +82,7 @@ do {
         }
     }
 
-    if ($reset -or ($ToolsetName -eq "" -and (Read-Host "Do you want to install a toolset for clang? (y/N)") -match "y|yes")) {    
+    if ($reset -or ($ToolsetName -eq "" -and -not ((Read-Host "Do you want to install a toolset for clang? (Y/n)") -match "n|no"))) {    
         $prompt = "What is the clang toolset name?"
         if ($reset) {
             $prompt += "(current: $ToolsetName)" 
@@ -154,6 +154,13 @@ function Install ($arch) {
         Copy-Item $bin "$targetPath\bin\"
         Copy-Item $dll "$targetPath\bin\"
         [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang.exe");
+
+        if (!(Test-Path "$targetPath\link-bin")) {
+            New-Item -ItemType Directory "$targetPath\link-bin"
+        }
+        Copy-Item $bin "$targetPath\link-bin\lld-link.exe"
+        Copy-Item $dll "$targetPath\link-bin\"
+        [IO.File]::WriteAllText("$targetPath\link-bin\.target","$LLVMDirectory\bin\lld-link.exe");
     }
 
     if ($ClangClToolsetName -ne "") {
@@ -165,12 +172,12 @@ function Install ($arch) {
         $content = (Get-Content -Encoding UTF8 "$assets\clang-cl\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
         Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
         if (Test-Path $bin) {
-            if (!(Test-Path "$targetPath\bin")) {
-                New-Item -ItemType Directory "$targetPath\bin"
+            if (!(Test-Path "$targetPath\msbuild-bin")) {
+                New-Item -ItemType Directory "$targetPath\msbuild-bin"
             }
-            Copy-Item $bin "$targetPath\bin\cl.exe"
-            Copy-Item $dll "$targetPath\bin\"
-            [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang-cl.exe");
+            Copy-Item $bin "$targetPath\msbuild-bin\cl.exe"
+            Copy-Item $dll "$targetPath\msbuild-bin\"
+            [IO.File]::WriteAllText("$targetPath\msbuild-bin\.target","$LLVMDirectory\msbuild-bin\cl.exe");
         }
     }
 }

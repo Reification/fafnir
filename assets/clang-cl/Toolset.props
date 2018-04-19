@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <LLVMDir>{{LLVMDir}}</LLVMDir>
-    <ExecutablePath>$(MSBuildThisFileDirectory)bin;$(LLVMDir)\bin;$(ExecutablePath)</ExecutablePath>
+    <ExecutablePath>$(MSBuildThisFileDirectory)msbuild-bin;$(LLVMDir)\bin;$(ExecutablePath)</ExecutablePath>
     <IncludePath>$(LLVMDir)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LLVMDir)\lib;$(LibraryPath)</LibraryPath>
     <ExcludePath>$(LLVMDir)\include;$(ExcludePath)</ExcludePath>

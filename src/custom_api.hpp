@@ -3,6 +3,17 @@
 
 #include <Windows.h>
 
+#define FAFNIR_ENABLE_SPAM 1
+
+#if FAFNIR_ENABLE_SPAM
+# include <iostream>
+# define FAFNIR_SPAM(...) { std::cout << __VA_ARGS__ ; }
+# define FAFNIR_WSPAM(...) { std::wcout << __VA_ARGS__ ; }
+#else
+# define FAFNIR_SPAM(...)
+# define FAFNIR_WSPAM(...)
+#endif
+
 namespace fafnir {
 
 BOOL WINAPI create_process_w(

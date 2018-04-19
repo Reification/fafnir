@@ -82,6 +82,8 @@ void modify_all_iat(const char *modname, R (WINAPI *origaddr)(Args...), R (WINAP
 
 BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID) {
     if(reason == DLL_PROCESS_ATTACH) {
+        FAFNIR_SPAM( "fafnir_injection_dll!\n" );
+
         fafnir::modify_all_iat("kernel32.dll", CreateProcessW, fafnir::create_process_w);
         fafnir::modify_all_iat("kernel32.dll", CreateProcessA, fafnir::create_process_a);
         fafnir::modify_all_iat("kernel32.dll", SetFileInformationByHandle, fafnir::set_file_information_by_handle);
