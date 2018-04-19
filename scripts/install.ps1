@@ -154,13 +154,6 @@ function Install ($arch) {
         Copy-Item $bin "$targetPath\bin\"
         Copy-Item $dll "$targetPath\bin\"
         [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang.exe");
-
-        if (!(Test-Path "$targetPath\link-bin")) {
-            New-Item -ItemType Directory "$targetPath\link-bin"
-        }
-        Copy-Item $bin "$targetPath\link-bin\lld-link.exe"
-        Copy-Item $dll "$targetPath\link-bin\"
-        [IO.File]::WriteAllText("$targetPath\link-bin\.target","$LLVMDirectory\bin\lld-link.exe");
     }
 
     if ($ClangClToolsetName -ne "") {

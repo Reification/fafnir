@@ -24,8 +24,8 @@
 
   <PropertyGroup>
     <LLVMDir>{{LLVMDir}}</LLVMDir>
-    <ExecutablePath Condition="'$(Platform)'=='x64' AND '$(ExecutablePath)' == ''">$(MSBuildThisFileDirectory)bin;$(MSBuildThisFileDirectory)link-bin;$(LLVMDir)\bin;$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
-    <ExecutablePath Condition="'$(Platform)'=='Win32' AND '$(ExecutablePath)' == ''">$(MSBuildThisFileDirectory)bin;$(MSBuildThisFileDirectory)link-bin;$(LLVMDir)\bin;$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
+    <ExecutablePath Condition="'$(Platform)'=='x64'">$(MSBuildThisFileDirectory)bin;$(LLVMDir)\bin;$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
+    <ExecutablePath Condition="'$(Platform)'=='Win32'">$(MSBuildThisFileDirectory)bin;$(LLVMDir)\bin;$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
     <IncludePath Condition="'$(IncludePath)' == ''">$(LLVMDir)\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ReferencePath Condition="'$(Platform)'=='x64' AND '$(ReferencePath)' == ''">$(VC_ReferencesPath_x64);</ReferencePath>
     <ReferencePath Condition="'$(Platform)'=='Win32' AND '$(ReferencePath)' == ''">$(VC_ReferencesPath_x86);</ReferencePath>

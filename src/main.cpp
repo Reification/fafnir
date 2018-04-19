@@ -132,7 +132,7 @@ int main(int argc, char**argv) {
       {
         FAFNIR_SPAM( argv[i] << "\n" );
       }
-      FAFNIR_SPAM( "\n###]fafnir_args\n" );
+      FAFNIR_SPAM( "--rsp-quoting=windows\n###]fafnir_args\n" );
 
       for ( int i = 1; i < argc; i++ )
       {
@@ -183,12 +183,6 @@ int main(int argc, char**argv) {
     }
 
     std::wstring_view additional_option(L" --rsp-quoting=windows");
-
-    if ( strstr( argv[0], "link" ) )
-    {
-      additional_option = L"";
-    }
-
     std::vector<wchar_t> cmdbuf;
     auto new_cmdline = cmdline.substr(itr - cmdline.begin());
     cmdbuf.reserve(target_path.native().size() + new_cmdline.size() + additional_option.size() + 3);
