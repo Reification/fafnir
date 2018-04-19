@@ -1,4 +1,4 @@
-param($LLVMDirectory = "", $ToolsetName = "", $ClangClToolsetName = "")
+param($LLVMDirectory = "", $ClangToolsetName = "", $ClangClToolsetName = "")
 $id=[System.Security.Principal.WindowsIdentity]::GetCurrent()
 $principal=new-object System.Security.Principal.WindowsPrincipal($id)
 
@@ -47,8 +47,8 @@ if (!$VSInstallDir) {
 
 $reset = $false
 
-$DefaultToolsetName = "v140_clang_llvm"
 $DefaultClangClToolsetName = "v140_cl_llvm"
+$DefaultClangToolsetName = "v140_clang_llvm"
 
 do {
     if ($reset -or $LLVMDirectory -eq "") {
@@ -82,21 +82,6 @@ do {
         }
     }
 
-    if ($reset -or ($ToolsetName -eq "" -and -not ((Read-Host "Do you want to install a toolset for clang? (Y/n)") -match "n|no"))) {    
-        $prompt = "What is the clang toolset name?"
-        if ($reset) {
-            $prompt += "(current: $ToolsetName)" 
-        } else {
-            $prompt += " (default: $DefaultToolsetName)"
-        }
-        $tmp = Read-Host $prompt
-        if ($tmp -eq "" -and $ToolsetName -eq "") {
-            $ToolsetName = $DefaultToolsetName
-        } else {
-            $ToolsetName = $tmp
-        }
-    }
-    
     if ($reset -or ($ClangClToolsetName -eq "" -and -not ((Read-Host "Do you want to install a toolset for clang-cl? (Y/n)") -match "n|no"))) {
         $prompt = "What is the clang-cl toolset name?"
         if ($reset) {
@@ -111,19 +96,34 @@ do {
             $ClangClToolsetName = $tmp
         }
     }
-    
+
+    if ($reset -or ($ClangToolsetName -eq "" -and ((Read-Host "Do you want to install a toolset for clang? (y/N)") -match "y|yes"))) {    
+        $prompt = "What is the clang toolset name?"
+        if ($reset) {
+            $prompt += "(current: $ClangToolsetName)" 
+        } else {
+            $prompt += " (default: $DefaultClangToolsetName)"
+        }
+        $tmp = Read-Host $prompt
+        if ($tmp -eq "" -and $ClangToolsetName -eq "") {
+            $ClangToolsetName = $DefaultClangToolsetName
+        } else {
+            $ClangToolsetName = $tmp
+        }
+    }
+        
     ""
     "=== Install configuration ==="
     "* LLVM install directory: $LLVMDirectory"
-    if ($ToolsetName -eq "") {
-        "* Clang toolset won't install."
-    } else {
-        "* Clang toolset name: $ToolsetName"
-    }
     if ($ClangClToolsetName -eq "") {
         "* Clang-cl toolset won't install."
     } else {
         "* Clang-cl toolset: $ClangClToolsetName"
+    }
+    if ($ClangToolsetName -eq "") {
+        "* Clang toolset won't install."
+    } else {
+        "* Clang toolset name: $ClangToolsetName"
     }
     ""
     $reset = $true
@@ -140,24 +140,6 @@ function Install ($arch) {
         return
     }
 
-    if ($ToolsetName -ne "") {
-        $targetPath = "$platformDir\$ToolsetName"        
-        if (!(Test-Path $targetPath)) {
-            New-Item -ItemType Directory $targetPath
-        }
-        Copy-Item "$assets\clang\Toolset.targets" "$targetPath"
-        $content = (Get-Content -Encoding UTF8 "$assets\clang\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
-        Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
-        if (Test-Path $bin) {
-            if (!(Test-Path "$targetPath\bin")) {
-                New-Item -ItemType Directory "$targetPath\bin"
-            }
-            Copy-Item $bin "$targetPath\bin\"
-            Copy-Item $dll "$targetPath\bin\"
-            [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang.exe");
-        }
-    }
-
     if ($ClangClToolsetName -ne "") {
         $targetPath = "$platformDir\$ClangClToolsetName"
         if (!(Test-Path $targetPath)) {
@@ -166,6 +148,36 @@ function Install ($arch) {
         Copy-Item "$assets\clang-cl\Toolset.targets" "$targetPath"
         $content = (Get-Content -Encoding UTF8 "$assets\clang-cl\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
         Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
+        if (Test-Path $bin) {
+            if (!(Test-Path "$targetPath\bin")) {
+                New-Item -ItemType Directory "$targetPath\bin"
+            }
+            Copy-Item $bin "$targetPath\bin\cl.exe"
+            if(Test-Path $dll) {
+                Copy-Item $dll "$targetPath\bin\"
+            }
+            [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\msbuild-bin\cl.exe");
+        }
+    }
+    
+    if ($ClangToolsetName -ne "") {
+        $targetPath = "$platformDir\$ClangToolsetName"        
+        if (!(Test-Path $targetPath)) {
+            New-Item -ItemType Directory $targetPath
+        }
+        Copy-Item "$assets\clang\Toolset.targets" "$targetPath"
+        $content = (Get-Content -Encoding UTF8 "$assets\clang\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
+        Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
+        #if (Test-Path $bin) {
+        #    if (!(Test-Path "$targetPath\bin")) {
+        #        New-Item -ItemType Directory "$targetPath\bin"
+        #    }
+        #    Copy-Item $bin "$targetPath\bin\"
+        #    if(Test-Path $dll) {
+        #       Copy-Item $dll "$targetPath\bin\"
+        #    }
+        #    [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang.exe");
+        #}
     }
 }
 

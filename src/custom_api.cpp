@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iostream>
 
 #include "fafnir.hpp"
 #include "custom_api.hpp"
@@ -39,27 +40,6 @@ const auto orig_CreateProcessW = reinterpret_cast<decltype(CreateProcessW)*>(
 const auto orig_CreateProcessA = reinterpret_cast<decltype(CreateProcessA)*>(
     GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "CreateProcessA")
 );
-
-#if 0 // never used
-const auto orig_MoveFileW = reinterpret_cast<decltype(MoveFileW)*>(
-    GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "MoveFileW")
-);
-const auto orig_MoveFileA = reinterpret_cast<decltype(MoveFileA)*>(
-    GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "MoveFileA")
-);
-const auto orig_MoveFileExW = reinterpret_cast<decltype(MoveFileExW)*>(
-    GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "MoveFileExW")
-);
-const auto orig_MoveFileExA = reinterpret_cast<decltype(MoveFileExA)*>(
-    GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "MoveFileExA")
-);
-const auto orig_MoveFileWithProgressW = reinterpret_cast<decltype(MoveFileWithProgressW)*>(
-    GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "MoveFileWithProgressW")
-);
-const auto orig_MoveFileWithProgressA = reinterpret_cast<decltype(MoveFileWithProgressA)*>(
-    GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "MoveFileWithProgressA")
-);
-#endif // 0
 
 const auto orig_SetFileInformationByHandle = reinterpret_cast<decltype(SetFileInformationByHandle)*>(
     GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "SetFileInformationByHandle")

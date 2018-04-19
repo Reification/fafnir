@@ -11,6 +11,7 @@
 
 #include "unicode.hpp"
 #include "fafnir.hpp"
+
 #include "custom_api.hpp"
 
 namespace fafnir {
@@ -63,43 +64,21 @@ file_type get_file_type(std::istream& in) noexcept {
 }
 
 using read_func = std::function<char32_t ( std::istream& in )>;
+using write_func = std::function<void ( std::ostream& out, char32_t ch )>;
 
-std::experimental::filesystem::path read_path_impl(const read_func& rf, std::istream& in) noexcept {
-    std::ostringstream ss;
-
-    for (auto ch = rf(in); ch != std::char_traits<char32_t>::eof(); ch = rf(in)) {
-        write_utf16_stream(ss, ch);
-    }
-    
-    auto str = ss.str();
-    return {reinterpret_cast<const wchar_t*>(str.data()),
-            reinterpret_cast<const wchar_t*>(str.data() + str.size())};
-}
-
-std::experimental::filesystem::path read_path(std::istream& in) noexcept {
-    auto type = get_file_type(in);
-    if (type == file_type::utf8_with_bom) {
-        in.seekg(3);
-    } else if (type == file_type::utf16_le) {
-        in.seekg(2);
-        return read_path_impl( &read_utf16_stream, in);
-    }
-    return read_path_impl( &read_utf8_stream, in);
-}
-
-std::string read_file_impl( const read_func& rf, std::istream& in ) noexcept
+std::string read_file_impl( const read_func& rf, const write_func& wf, std::istream& in ) noexcept
 {
   std::ostringstream ss;
 
   for ( auto ch = rf( in ); ch != std::char_traits<char32_t>::eof(); ch = rf( in ) )
   {
-    write_utf8_stream( ss, ch );
+    wf( ss, ch );
   }
 
   return ss.str();
 }
 
-std::string read_file( std::istream& in ) noexcept
+std::string read_file( std::istream& in, const write_func& wf=&write_utf8_stream ) noexcept
 {
   auto type = get_file_type( in );
   if ( type == file_type::utf8_with_bom )
@@ -109,9 +88,16 @@ std::string read_file( std::istream& in ) noexcept
   else if ( type == file_type::utf16_le )
   {
     in.seekg( 2 );
-    return read_file_impl( &read_utf16_stream, in );
+    return read_file_impl( &read_utf16_stream, wf, in );
   }
-  return read_file_impl( &read_utf8_stream, in );
+  return read_file_impl( &read_utf8_stream, wf, in );
+}
+
+std::experimental::filesystem::path read_path( std::istream& in ) noexcept
+{
+  std::string str = read_file( in, &write_utf16_stream );
+  return {  reinterpret_cast<const wchar_t*>(str.data()),
+            reinterpret_cast<const wchar_t*>(str.data() + str.size()) };
 }
 
 }
@@ -119,12 +105,40 @@ std::string read_file( std::istream& in ) noexcept
 int main(int argc, char**argv) {
     using namespace fafnir;
 
-    (void)argc; (void)argv;
-#if FAFNIR_ENABLE_SPAM
+    const char* exe_name = strrchr( argv[0], '\\' );
+    exe_name = exe_name ? (exe_name + 1) : argv[0];
+
+    if ( strstr( exe_name, "cl." ) || strstr( exe_name, "CL." ) )
     {
-      const char* name = strrchr(argv[0], '\\');
-      FAFNIR_SPAM( "fafnir_clang as " << (name ? (name + 1) : argv[0]) << "!\n" );
+      if ( argv[argc - 1][0] != '@' )
+      {
+        const char* name = strrchr( argv[argc - 1], '\\' );
+        name = name ? (name + 1) : argv[argc - 1];
+        std::cout << name << "\n";
+      }
+
+      for ( int i = 1; i < argc; i++ )
+      {
+        if ( argv[i][0] == '@' )
+        {
+          std::string command = read_file( std::ifstream( argv[i] + 1, std::ios::binary ) );
+          const char* name = strrchr( command.c_str(), '\\' );
+          if ( !name )
+          {
+            name = strrchr( command.c_str(), ' ' );
+            name = name ? (name + 1) : command.c_str();
+          }
+          else
+          {
+            name = name + 1;
+          }
+          std::cout << name << "\n";
+        }
+      }
     }
+
+#if FAFNIR_ENABLE_SPAM
+    FAFNIR_SPAM( "fafnir_clang as " << exe_name << "!\n" );
 
     {
       FAFNIR_SPAM( "###fafnir_args[\n" );
@@ -182,20 +196,23 @@ int main(int argc, char**argv) {
         ++itr;
     }
 
-    std::wstring_view additional_option(L" --rsp-quoting=windows");
     std::vector<wchar_t> cmdbuf;
     auto new_cmdline = cmdline.substr(itr - cmdline.begin());
-    cmdbuf.reserve(target_path.native().size() + new_cmdline.size() + additional_option.size() + 3);
+    cmdbuf.reserve(target_path.native().size() + new_cmdline.size() + 3);
     cmdbuf.push_back('"');
     cmdbuf.insert(cmdbuf.end(), target_path.native().begin(), target_path.native().end());
     cmdbuf.push_back('"');
     cmdbuf.insert(cmdbuf.end(), new_cmdline.begin(), new_cmdline.end());
-    cmdbuf.insert(cmdbuf.end(), additional_option.begin(), additional_option.end());
     cmdbuf.push_back(L'\0');
     STARTUPINFOW si{sizeof(si)};
     PROCESS_INFORMATION pi{};
 
+#if FAFNIR_USE_INJECTION
     create_process_w(target_path.c_str(), cmdbuf.data(), nullptr, nullptr, true, 0, nullptr, nullptr, &si, &pi);
+#else
+    CreateProcessW( target_path.c_str(), cmdbuf.data(), nullptr, nullptr, true, 0, nullptr, nullptr, &si, &pi );
+#endif
+
     const handle_ptr process{pi.hProcess};
     const handle_ptr thread{pi.hThread};
     WaitForSingleObject(process.get(), INFINITE);

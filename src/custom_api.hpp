@@ -18,6 +18,7 @@
 # define FAFNIR_WSPAM(...)
 #endif
 
+#if FAFNIR_USE_INJECTION
 namespace fafnir {
 
 BOOL WINAPI create_process_w(
@@ -54,5 +55,6 @@ BOOL WINAPI set_file_information_by_handle(
 );
 
 }
+#endif
 
 #endif
