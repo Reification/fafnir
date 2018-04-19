@@ -135,6 +135,8 @@ int main(int argc, char**argv) {
           std::cout << name << "\n";
         }
       }
+
+      std::cout.flush();
     }
 
 #if FAFNIR_ENABLE_SPAM
