@@ -73,10 +73,7 @@ do {
             }
             $clangPath = "$LLVMDirectory\bin\clang.exe"
             if (!(Test-Path $clangPath)) {
-                if (!((Read-Host "$clangPath doesn't exist. Would you like to continue installation? (y/N)") -match "y|yes")) {
-                    $LLVMDirectory = ""
-                    continue
-                }
+                Install-Failed("$clangPath doesn't exist.")
             }
             break
         }
@@ -118,6 +115,9 @@ do {
     if ($ClangClToolsetName -eq "") {
         "* Clang-cl toolset won't install."
     } else {
+        if(!(Test-Path "$LLVMDirectory\msbuild-bin\cl.exe")) {
+            Install-Failed("$LLVMDirectory\msbuild-bin\cl.exe does not exist.")
+        }
         "* Clang-cl toolset: $ClangClToolsetName"
     }
     if ($ClangToolsetName -eq "") {
@@ -161,7 +161,7 @@ function Install ($arch) {
     }
     
     if ($ClangToolsetName -ne "") {
-        $targetPath = "$platformDir\$ClangToolsetName"        
+        $targetPath = "$platformDir\$ClangToolsetName"
         if (!(Test-Path $targetPath)) {
             New-Item -ItemType Directory $targetPath
         }
