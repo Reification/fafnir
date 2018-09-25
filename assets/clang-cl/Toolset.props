@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <LLVMDir>{{LLVMDir}}</LLVMDir>
-    <ExecutablePath>$(MSBuildThisFileDirectory)bin;$(LLVMDir)\msbuild-bin;$(LLVMDir)\bin;$(ExecutablePath)</ExecutablePath>
+    <ExecutablePath>$(MSBuildThisFileDirectory)bin;$(LLVMDir)\bin;$(ExecutablePath)</ExecutablePath>
     <IncludePath>$(LLVMDir)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LLVMDir)\lib;$(LibraryPath)</LibraryPath>
     <ExcludePath>$(LLVMDir)\include;$(ExcludePath)</ExcludePath>
@@ -15,8 +15,9 @@
       <ProgramDataBaseFileName/>
       <!-- /Gm- /Gm option not recognized or used by clang-cl, causing an annoying warning. -->
       <MinimalRebuild/>
-      <AdditionalOptions Condition="'$(Platform)'=='Win32'">-m32 -fmsc-version=1910 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Platform)'=='x64'">-m64 -fmsc-version=1910 %(AdditionalOptions)</AdditionalOptions>
+      <!-- set predefined compile-time macro _MSC_VER to this version number when running -->
+      <AdditionalOptions Condition="'$(Platform)'=='Win32'">-m32 -fmsc-version=1915 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'=='x64'">-m64 -fmsc-version=1915 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

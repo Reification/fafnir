@@ -209,11 +209,7 @@ int main(int argc, char**argv) {
     STARTUPINFOW si{sizeof(si)};
     PROCESS_INFORMATION pi{};
 
-#if FAFNIR_USE_INJECTION
-    create_process_w(target_path.c_str(), cmdbuf.data(), nullptr, nullptr, true, 0, nullptr, nullptr, &si, &pi);
-#else
     CreateProcessW( target_path.c_str(), cmdbuf.data(), nullptr, nullptr, true, 0, nullptr, nullptr, &si, &pi );
-#endif
 
     const handle_ptr process{pi.hProcess};
     const handle_ptr thread{pi.hThread};

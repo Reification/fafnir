@@ -4,6 +4,7 @@ project(fafnir LANGUAGES CXX VERSION 1.0.1.1)
 
 set(BUILD_TESTS false CACHE BOOL "Generate test projects or not")
 set(BUILD_INJECTION_DLL false CACHE BOOL "Build and use injection dll or not")
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/out" CACHE STRING "Install location" FORCE)
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang|GNU|Intel")
     if("${CMAKE_CXX_COMPILER}" MATCHES "/cl.exe")
@@ -20,11 +21,7 @@ else()
     message(WARNING "'${CMAKE_CXX_COMPILER_ID}' not recognized - C++17 standard not enabled!")
 endif()
 
-if(BUILD_INJECTION_DLL)
-  add_definitions(-DFAFNIR_USE_INJECTION=1)
-else()
-  add_definitions(-DFAFNIR_USE_INJECTION=0)
-endif()
+add_definitions(-DFAFNIR_USE_INJECTION=0)
 
 if(BUILD_TESTS)
   enable_testing()
@@ -36,5 +33,6 @@ if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
+make_directory("${CMAKE_INSTALL_PREFIX}")
 install(FILES install.bat README.md README_ja.md LICENSE DESTINATION ".")
 install(DIRECTORY scripts assets DESTINATION ".")

@@ -47,8 +47,9 @@ if (!$VSInstallDir) {
 
 $reset = $false
 
-$DefaultClangClToolsetName = "v140_cl_llvm"
-$DefaultClangToolsetName = "v140_clang_llvm"
+$DefaultClangClToolsetName = "v141_cl_llvm"
+$clangClPath = ""
+$clangPath = ""
 
 do {
     if ($reset -or $LLVMDirectory -eq "") {
@@ -72,6 +73,7 @@ do {
                 continue
             }
             $clangPath = "$LLVMDirectory\bin\clang.exe"
+            $clangClPath = "$LLVMDirectory\bin\clang-cl.exe"
             if (!(Test-Path $clangPath)) {
                 Install-Failed("$clangPath doesn't exist.")
             }
@@ -94,36 +96,16 @@ do {
         }
     }
 
-    if ($reset -or ($ClangToolsetName -eq "" -and ((Read-Host "Do you want to install a toolset for clang? (y/N)") -match "y|yes"))) {    
-        $prompt = "What is the clang toolset name?"
-        if ($reset) {
-            $prompt += "(current: $ClangToolsetName)" 
-        } else {
-            $prompt += " (default: $DefaultClangToolsetName)"
-        }
-        $tmp = Read-Host $prompt
-        if ($tmp -eq "" -and $ClangToolsetName -eq "") {
-            $ClangToolsetName = $DefaultClangToolsetName
-        } else {
-            $ClangToolsetName = $tmp
-        }
-    }
-        
     ""
     "=== Install configuration ==="
     "* LLVM install directory: $LLVMDirectory"
     if ($ClangClToolsetName -eq "") {
         "* Clang-cl toolset won't install."
     } else {
-        if(!(Test-Path "$LLVMDirectory\msbuild-bin\cl.exe")) {
-            Install-Failed("$LLVMDirectory\msbuild-bin\cl.exe does not exist.")
+        if(!(Test-Path "$clangClPath")) {
+            Install-Failed("$clangClPath does not exist.")
         }
         "* Clang-cl toolset: $ClangClToolsetName"
-    }
-    if ($ClangToolsetName -eq "") {
-        "* Clang toolset won't install."
-    } else {
-        "* Clang toolset name: $ClangToolsetName"
     }
     ""
     $reset = $true
@@ -132,7 +114,6 @@ do {
 $rootDir = Split-Path -Parent $myInvocation.MyCommand.Definition | Split-Path -Parent
 $assets = "$rootDir\assets"
 $bin = "$rootDir\bin\clang.exe"
-$dll = "$rootDir\bin\fafnir_injection.dll"
 
 function Install ($arch) {
     $platformDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms\$arch\PlatformToolsets";
@@ -153,32 +134,9 @@ function Install ($arch) {
                 New-Item -ItemType Directory "$targetPath\bin"
             }
             Copy-Item $bin "$targetPath\bin\cl.exe"
-            if(Test-Path $dll) {
-                Copy-Item $dll "$targetPath\bin\"
-            }
-            [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\msbuild-bin\cl.exe");
+            [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang-cl.exe");
         }
-    }
-    
-    if ($ClangToolsetName -ne "") {
-        $targetPath = "$platformDir\$ClangToolsetName"
-        if (!(Test-Path $targetPath)) {
-            New-Item -ItemType Directory $targetPath
-        }
-        Copy-Item "$assets\clang\Toolset.targets" "$targetPath"
-        $content = (Get-Content -Encoding UTF8 "$assets\clang\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
-        Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
-        #if (Test-Path $bin) {
-        #    if (!(Test-Path "$targetPath\bin")) {
-        #        New-Item -ItemType Directory "$targetPath\bin"
-        #    }
-        #    Copy-Item $bin "$targetPath\bin\"
-        #    if(Test-Path $dll) {
-        #       Copy-Item $dll "$targetPath\bin\"
-        #    }
-        #    [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang.exe");
-        #}
-    }
+    }    
 }
 
 Install "Win32"
