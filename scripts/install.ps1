@@ -5,7 +5,7 @@ $principal=new-object System.Security.Principal.WindowsPrincipal($id)
 $role=[System.Security.Principal.WindowsBuiltInRole]::Administrator
 if (!$principal.IsInRole($role)) {
    $pinfo = New-Object System.Diagnostics.ProcessStartInfo "powershell"
-   [string[]]$arguments = @("-ExecutionPolicy","Bypass",$myInvocation.MyCommand.Definition)
+   [string[]]$arguments = @("-NoExit", "-ExecutionPolicy","Bypass",$myInvocation.MyCommand.Definition)
    foreach ($key in $myInvocation.BoundParameters.Keys) {
        $arguments += ,@("-$key")
        $arguments += ,@($myInvocation.BoundParameters[$key])
