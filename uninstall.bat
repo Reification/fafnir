@@ -1,2 +1,2 @@
-@powershell -ExecutionPolicy Bypass %~dp0\scripts\install.ps1 uninstall "%*"
+@powershell -ExecutionPolicy Bypass %~dp0\scripts\install.ps1 -Uninstall "%*"
 @pause
