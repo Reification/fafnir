@@ -34,5 +34,5 @@ if(BUILD_TESTS)
 endif()
 
 make_directory("${CMAKE_INSTALL_PREFIX}")
-install(FILES install.bat README.md README_ja.md LICENSE DESTINATION ".")
+install(FILES install.bat uninstall.bat README.md README_ja.md LICENSE DESTINATION ".")
 install(DIRECTORY scripts assets DESTINATION ".")
