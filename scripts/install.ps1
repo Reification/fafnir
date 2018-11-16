@@ -1,4 +1,4 @@
-param($LLVMDirectory = "", $ClangToolsetName = "", $ClangClToolsetName = "")
+param($LLVMDirectory = "", $ClangClToolsetName = "", [switch]$Noprompt = $false, [switch]$Uninstall = $false)
 $id=[System.Security.Principal.WindowsIdentity]::GetCurrent()
 $principal=new-object System.Security.Principal.WindowsPrincipal($id)
 
@@ -40,82 +40,123 @@ $LLVMDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\LLVM\LLVM -ErrorAc
 if (!$LLVMDir) {
     $LLVMDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\LLVM\LLVM
 }
-
+if (!$LLVMDir) {
+    $LLVMDir = "C:\Program Files\LLVM"
+}
 if (!$VSInstallDir) {
     Install-Failed "Visual Studio 2017 is not found."
 }
-
-$reset = $false
 
 $DefaultClangClToolsetName = "v141_cl_llvm"
 $clangClPath = ""
 $clangPath = ""
 
-do {
-    if ($reset -or $LLVMDirectory -eq "") {
-        for(;;) {
-            $prompt = "Where is the LLVM Directory?"
-            if ($LLVMDirectory -ne "") {
-                $prompt += " (current: $LLVMDirectory)"
-            } elseif ($LLVMDir -ne "") {
-                $prompt += " (default: $LLVMDir)"
+$reset = $false
+$interactive = $true
+$installing = $true
+$verb = "install"
+
+#"LLVMDirectory[arg]: $($LLVMDirectory)"
+#"ClangClToolsetName[arg]: $($ClangClToolsetName)"
+#"Noprompt[arg]: $($Noprompt)"
+#"Uninstall[arg]: $($Uninstall)"
+
+if($Noprompt) {
+    $interactive = $false
+    if(!$LLVMDirectory) {
+        $LLVMDirectory = "default"
+    }
+    if(!$ClangCLToolsetName) {
+        $ClangCLToosetName = "default"
+    }
+}
+
+if($Uninstall) {
+    $LLVMDirectory = "LLVM_PATH_NOT_USED_FOR_UNINSTALL"
+    $installing = $false
+    $verb = "uninstall"
+}
+
+if($LLVMDirectory -eq "default") {
+    $LLVMDirectory = $LLVMDir    
+}
+
+if($ClangClToolsetName -eq "default") {
+    $ClangClToolsetName = $DefaultClangClToolsetName
+}
+
+
+#"LLVMDirectory[eff]: $($LLVMDirectory)"
+#"ClangClToolsetName[eff]: $($ClangClToolsetName)"
+#"installing: $($installing)"
+#"interactive: $($interactive)"
+
+if($interactive) {
+    do {
+        if ($installing -and ($reset -or $LLVMDirectory -eq "")) {
+            for(;;) {
+                $prompt = "Where is the LLVM Directory?"
+                if ($LLVMDirectory -ne "") {
+                    $prompt += " (current: $LLVMDirectory)"
+                } elseif ($LLVMDir -ne "") {
+                    $prompt += " (default: $LLVMDir)"
+                }
+                $tmp = Read-Host $prompt
+                if ($tmp -eq "") {
+                    if ($LLVMDirectory -eq "") {
+                        $LLVMDirectory = $LLVMDir
+                    }
+                } else {
+                    $LLVMDirectory = $tmp
+                }
+                if ($LLVMDirectory -eq "") {
+                    "LLVM directory must be specified."
+                    continue
+                }
+                $clangPath = "$LLVMDirectory\bin\clang.exe"
+                $clangClPath = "$LLVMDirectory\bin\clang-cl.exe"
+                if (!(Test-Path $clangPath)) {
+                    Install-Failed("$clangPath doesn't exist.")
+                }
+                break
+            }
+        }
+
+        if ($reset -or ($ClangClToolsetName -eq "")) {
+            $prompt = "What is the clang-cl toolset name?"
+            if ($reset) {
+                $prompt += "(current: $ClangClToolsetName)" 
+            } else {
+                $prompt += " (default: $DefaultClangClToolsetName)"
             }
             $tmp = Read-Host $prompt
-            if ($tmp -eq "") {
-                if ($LLVMDirectory -eq "") {
-                    $LLVMDirectory = $LLVMDir
-                }
+            if ($tmp -eq "" -and $ClangClToolsetName -eq "") {
+                $ClangClToolsetName = $DefaultClangClToolsetName
             } else {
-                $LLVMDirectory = $tmp
+                $ClangClToolsetName = $tmp
             }
-            if ($LLVMDirectory -eq "") {
-                "LLVM directory must be specified."
-                continue
-            }
-            $clangPath = "$LLVMDirectory\bin\clang.exe"
-            $clangClPath = "$LLVMDirectory\bin\clang-cl.exe"
-            if (!(Test-Path $clangPath)) {
-                Install-Failed("$clangPath doesn't exist.")
-            }
-            break
         }
-    }
 
-    if ($reset -or ($ClangClToolsetName -eq "" -and -not ((Read-Host "Do you want to install a toolset for clang-cl? (Y/n)") -match "n|no"))) {
-        $prompt = "What is the clang-cl toolset name?"
-        if ($reset) {
-            $prompt += "(current: $ClangClToolsetName)" 
-        } else {
-            $prompt += " (default: $DefaultClangClToolsetName)"
+        ""
+        "=== configuration ==="
+        if($installing) {
+            "* LLVM install directory: $LLVMDirectory"
+            if(!(Test-Path "$clangClPath")) {
+                Install-Failed("$clangClPath does not exist.")
+            }
         }
-        $tmp = Read-Host $prompt
-        if ($tmp -eq "" -and $ClangClToolsetName -eq "") {
-            $ClangClToolsetName = $DefaultClangClToolsetName
-        } else {
-            $ClangClToolsetName = $tmp
-        }
-    }
-
-    ""
-    "=== Install configuration ==="
-    "* LLVM install directory: $LLVMDirectory"
-    if ($ClangClToolsetName -eq "") {
-        "* Clang-cl toolset won't install."
-    } else {
-        if(!(Test-Path "$clangClPath")) {
-            Install-Failed("$clangClPath does not exist.")
-        }
+ 
         "* Clang-cl toolset: $ClangClToolsetName"
-    }
-    ""
-    $reset = $true
-} while((Read-Host "Is it OK to install? (Y/n)") -match "n|no")
+        ""
+        $reset = $true
+    } while((Read-Host "Is it OK to $($verb)? (Y/n)") -match "n|no")
+}
 
 $rootDir = Split-Path -Parent $myInvocation.MyCommand.Definition | Split-Path -Parent
 $assets = "$rootDir\assets"
 $bin = "$rootDir\bin\clang.exe"
 
-function Install ($arch) {
+function InstallArch ($arch) {
     $platformDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms\$arch\PlatformToolsets";
     if (!(Test-Path $platformDir)) {
         return
@@ -136,12 +177,31 @@ function Install ($arch) {
             Copy-Item $bin "$targetPath\bin\cl.exe"
             [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang-cl.exe");
         }
+        "Installed $($ClangClToolsetName) for $($arch)"
+    }
+}
+
+function UninstallArch($arch) {
+    $platformDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms\$arch\PlatformToolsets";
+    if (!(Test-Path $platformDir)) {
+        return
+    }
+
+    if ($ClangClToolsetName -ne "") {
+        $targetPath = "$platformDir\$ClangClToolsetName"
+        if (Test-Path $targetPath) {
+            Remove-Item -path "$targetPath" -recurse
+            "Uninstalled $($ClangClToolsetName) for $($arch)"
+        }
     }    
 }
 
-Install "Win32"
-Install "x64"
-
-Write-Host -NoNewLine "Press any key to continue..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-""
+if($installing) {
+    "Installing LLVM Integration Toolsets $($ClangClToosetName)"
+    InstallArch "Win32"
+    InstallArch "x64"
+} else {
+    "Uninstalling LLVM Integration Toolsets $($ClangClToosetName)"
+    UninstallArch "Win32"
+    UninstallArch "x64"    
+}
