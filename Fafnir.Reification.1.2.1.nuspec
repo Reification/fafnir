@@ -25,7 +25,7 @@
     <file src="out\bin\clang.exe" target="assets\clang.exe" />
     <file src="assets\Toolset.props" target="assets\Toolset.props" />
     <file src="assets\Toolset.targets" target="assets\Toolset.targets" />    
-    <file src="tools\Uninstall.ps1" target="tools\ChocolateyUninstall.ps1" />
-    <file src="tools\Install.ps1" target="tools\ChocolateyInstall.ps1" />
+    <file src="chocolatey_tools\Uninstall.ps1" target="tools\ChocolateyUninstall.ps1" />
+    <file src="chocolatey_tools\Install.ps1" target="tools\ChocolateyInstall.ps1" />
   </files>
 </package>

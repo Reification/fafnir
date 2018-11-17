@@ -1,6 +1,7 @@
 #!/bin/bash
-projdir=$(dirname "${0}")
-cd "$projdir"
+projDir=$(dirname "${0}")
+cd "$projDir"
+projDir=$(pwd)
 
 pkgName=$(echo *.nuspec)
 pkgName=${pkgName/.nuspec/}
@@ -27,12 +28,13 @@ else
   exit 1
 fi
 
-cd "$projdir"
+cd "$projDir"
 
 (rm -rf $pkgName/ $pkgName.zip $pkgName.nupkg 2>&1) > /dev/null
 
 if (which nuget 2>&1) > /dev/null; then
-  nuget config -Set repositoryPath="$(cygpath -w $PWD)"
+  projDirW=$(cygpath -w "$projDir")
+  nuget config -Set repositoryPath="$projDirW"
   #filter out the warnings about ChocolateyInstall.ps1 and ChocolateyUninstall.ps1 - they are actually incorrect
   (nuget pack -IncludeReferencedProjects -properties Configuration=Release 2>&1) | grep -v 'nstall\.ps1'
 else
