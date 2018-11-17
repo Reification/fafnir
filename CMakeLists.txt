@@ -35,4 +35,4 @@ endif()
 
 make_directory("${CMAKE_INSTALL_PREFIX}")
 install(FILES install.bat uninstall.bat README.md README_ja.md LICENSE DESTINATION ".")
-install(DIRECTORY tools scripts assets DESTINATION ".")
+install(DIRECTORY scripts assets DESTINATION ".")

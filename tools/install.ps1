@@ -1,1 +1,67 @@
-powershell $PSScriptRoot\..\scripts\install_command.ps1 -NoPrompt -ToolsetName default -LLVMDirectory default
+function Install-Failed($message) {
+    Write-Error $message
+    Write-Host -NoNewLine "Press any key to continue..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
+}
+
+function Get-Registry($key, $valuekey = "") {
+    $reg = Get-Item -Path $key -ErrorAction SilentlyContinue
+    if ($reg) {
+        return $reg.GetValue($valuekey)
+    }
+    return $null
+}
+
+$VSInstallDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\SxS\VS7 "15.0"
+if (!$VSInstallDir) {
+    $VSInstallDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\SxS\VS7 "15.0"
+}
+$LLVMDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\LLVM\LLVM -ErrorAction 
+if (!$LLVMDir) {
+    $LLVMDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\LLVM\LLVM
+}
+if (!$LLVMDir) {
+    $LLVMDir = "C:\Program Files\LLVM"
+}
+if (!$VSInstallDir) {
+    Install-Failed "Visual Studio 2017 is not found."
+}
+
+$ToolsetName = "v141_cl_llvm"
+$LLVMDirectory = $LLVMDir
+
+$rootDir = Split-Path -Parent $myInvocation.MyCommand.Definition | Split-Path -Parent
+$assets = "$rootDir\assets"
+
+if(!(Test-Path $LLVMDirectory)) {
+    Install-Failed "LLVM not installed at $($LLVMDirectory)."
+}
+
+function InstallArch ($arch) {
+    $platformDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms\$arch\PlatformToolsets";
+    if (!(Test-Path $platformDir) -or $ToolsetName -eq "") {
+        "Missing toolset directory for $($arch) or ToolsetName ($($ToolsetName)) not specified"
+        return
+    }
+
+    $targetPath = "$platformDir\$ToolsetName"
+    if (!(Test-Path $targetPath)) {
+        New-Item -ItemType Directory $targetPath | Out-Null
+    }
+    Copy-Item "$assets\Toolset.targets" "$targetPath"
+    $content = (Get-Content -Encoding UTF8 "$assets\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
+    Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
+    if (Test-Path $assets\clang.exe) {
+        if (!(Test-Path "$targetPath\bin")) {
+            New-Item -ItemType Directory "$targetPath\bin" | Out-Null
+        }
+        Copy-Item $assets\clang.exe "$targetPath\bin\cl.exe"
+        [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang-cl.exe");
+    }
+    "Installed $($ToolsetName) for $($arch)"
+}
+
+"Installing LLVM Integration Toolset $($ToolsetName)"
+InstallArch "Win32"
+InstallArch "x64"
