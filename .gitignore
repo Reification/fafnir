@@ -1,11 +1,14 @@
 bin/
 out/
+build/
 
 *.a
 *.so
 *.lib
 *.dll
 *.exe
+*.zip
+*.nupkg
 
 # CMake
 CMakeFiles/

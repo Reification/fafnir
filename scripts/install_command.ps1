@@ -1,4 +1,4 @@
-param($LLVMDirectory = "", $ClangClToolsetName = "", [switch]$Noprompt = $false, [switch]$Uninstall = $false)
+param($LLVMDirectory = "", $ToolsetName = "", [switch]$Noprompt = $false, [switch]$Uninstall = $false)
 $id=[System.Security.Principal.WindowsIdentity]::GetCurrent()
 $principal=new-object System.Security.Principal.WindowsPrincipal($id)
 
@@ -52,9 +52,8 @@ if (!$VSInstallDir) {
     Install-Failed "Visual Studio 2017 is not found."
 }
 
-$DefaultClangClToolsetName = "v141_cl_llvm"
+$DefaultToolsetName = "v141_cl_llvm"
 $clangClPath = ""
-$clangPath = ""
 
 $reset = $false
 $interactive = $true
@@ -62,17 +61,17 @@ $installing = $true
 $verb = "install"
 
 #"LLVMDirectory[arg]: $($LLVMDirectory)"
-#"ClangClToolsetName[arg]: $($ClangClToolsetName)"
+#"ToolsetName[arg]: $($ToolsetName)"
 #"Noprompt[arg]: $($Noprompt)"
 #"Uninstall[arg]: $($Uninstall)"
 
 if($Noprompt) {
     $interactive = $false
     if(!$LLVMDirectory) {
-        $LLVMDirectory = "default"
+        $LLVMDirectory = $LLVMDir
     }
-    if(!$ClangCLToolsetName) {
-        $ClangCLToosetName = "default"
+    if(!$ToolsetName) {
+        $ToolsetName = $DefaultToolsetName
     }
 }
 
@@ -86,13 +85,13 @@ if($LLVMDirectory -eq "default") {
     $LLVMDirectory = $LLVMDir    
 }
 
-if($ClangClToolsetName -eq "default") {
-    $ClangClToolsetName = $DefaultClangClToolsetName
+if($ToolsetName -eq "default") {
+    $ToolsetName = $DefaultToolsetName
 }
 
 
 #"LLVMDirectory[eff]: $($LLVMDirectory)"
-#"ClangClToolsetName[eff]: $($ClangClToolsetName)"
+#"ToolsetName[eff]: $($ToolsetName)"
 #"installing: $($installing)"
 #"interactive: $($interactive)"
 
@@ -118,27 +117,26 @@ if($interactive) {
                     "LLVM directory must be specified."
                     continue
                 }
-                $clangPath = "$LLVMDirectory\bin\clang.exe"
                 $clangClPath = "$LLVMDirectory\bin\clang-cl.exe"
-                if (!(Test-Path $clangPath)) {
-                    Install-Failed("$clangPath doesn't exist.")
+                if (!(Test-Path $clangClPath)) {
+                    Install-Failed("$clangClPath doesn't exist.")
                 }
                 break
             }
         }
 
-        if ($reset -or ($ClangClToolsetName -eq "")) {
-            $prompt = "What is the clang-cl toolset name?"
+        if ($reset -or ($ToolsetName -eq "")) {
+            $prompt = "What is the toolset name?"
             if ($reset) {
-                $prompt += "(current: $ClangClToolsetName)" 
+                $prompt += "(current: $ToolsetName)" 
             } else {
-                $prompt += " (default: $DefaultClangClToolsetName)"
+                $prompt += " (default: $DefaultToolsetName)"
             }
             $tmp = Read-Host $prompt
-            if ($tmp -eq "" -and $ClangClToolsetName -eq "") {
-                $ClangClToolsetName = $DefaultClangClToolsetName
+            if ($tmp -eq "" -and $ToolsetName -eq "") {
+                $ToolsetName = $DefaultToolsetName
             } else {
-                $ClangClToolsetName = $tmp
+                $ToolsetName = $tmp
             }
         }
 
@@ -151,7 +149,7 @@ if($interactive) {
             }
         }
  
-        "* Clang-cl toolset: $ClangClToolsetName"
+        "* Toolset: $ToolsetName"
         ""
         $reset = $true
     } while((Read-Host "Is it OK to $($verb)? (Y/n)") -match "n|no")
@@ -163,50 +161,47 @@ $bin = "$rootDir\bin\clang.exe"
 
 function InstallArch ($arch) {
     $platformDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms\$arch\PlatformToolsets";
-    if (!(Test-Path $platformDir)) {
+    if (!(Test-Path $platformDir) -or $ToolsetName -eq "") {
+        "Missing toolset directory for $($arch) or ToolsetName ($($ToolsetName)) not specified"
         return
     }
 
-    if ($ClangClToolsetName -ne "") {
-        $targetPath = "$platformDir\$ClangClToolsetName"
-        if (!(Test-Path $targetPath)) {
-            New-Item -ItemType Directory $targetPath
-        }
-        Copy-Item "$assets\clang-cl\Toolset.targets" "$targetPath"
-        $content = (Get-Content -Encoding UTF8 "$assets\clang-cl\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
-        Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
-        if (Test-Path $bin) {
-            if (!(Test-Path "$targetPath\bin")) {
-                New-Item -ItemType Directory "$targetPath\bin"
-            }
-            Copy-Item $bin "$targetPath\bin\cl.exe"
-            [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang-cl.exe");
-        }
-        "Installed $($ClangClToolsetName) for $($arch)"
+    $targetPath = "$platformDir\$ToolsetName"
+    if (!(Test-Path $targetPath)) {
+        New-Item -ItemType Directory $targetPath | Out-Null
     }
+    Copy-Item "$assets\Toolset.targets" "$targetPath"
+    $content = (Get-Content -Encoding UTF8 "$assets\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
+    Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
+    if (Test-Path $bin) {
+        if (!(Test-Path "$targetPath\bin")) {
+            New-Item -ItemType Directory "$targetPath\bin" | Out-Null
+        }
+        Copy-Item $bin "$targetPath\bin\cl.exe"
+        [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang-cl.exe");
+    }
+    "Installed $($ToolsetName) for $($arch)"
 }
 
 function UninstallArch($arch) {
     $platformDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms\$arch\PlatformToolsets";
-    if (!(Test-Path $platformDir)) {
+    $targetPath = "$platformDir\$ToolsetName"
+    
+    if ($ToolsetName -eq "" -or !(Test-Path $targetPath)) {
+        "Toolset $($ToolsetName) for $($arch) was not installed."
         return
     }
-
-    if ($ClangClToolsetName -ne "") {
-        $targetPath = "$platformDir\$ClangClToolsetName"
-        if (Test-Path $targetPath) {
-            Remove-Item -path "$targetPath" -recurse
-            "Uninstalled $($ClangClToolsetName) for $($arch)"
-        }
-    }    
+ 
+    Remove-Item -path "$targetPath" -recurse
+    "Uninstalled $($ToolsetName) for $($arch)"
 }
 
 if($installing) {
-    "Installing LLVM Integration Toolsets $($ClangClToosetName)"
+    "Installing LLVM Integration Toolset $($ToolsetName)"
     InstallArch "Win32"
     InstallArch "x64"
 } else {
-    "Uninstalling LLVM Integration Toolsets $($ClangClToosetName)"
+    "Uninstalling LLVM Integration Toolset $($ToolsetName)"
     UninstallArch "Win32"
     UninstallArch "x64"    
 }
