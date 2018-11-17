@@ -8,24 +8,24 @@
     <owners>bherrera@reification.io</owners>
     <licenseUrl>https://raw.githubusercontent.com/Reification/fafnir/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/Reification/fafnir</projectUrl>
+    <!-- url to an icon is only important if the package is going to be published on chocolatey.org -->
     <!-- <iconUrl></iconUrl> -->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>MSVS 2017 Toolset integration for LLVM</description>
     <releaseNotes>Update LLVM 7.0</releaseNotes>
     <copyright>Open Source, MIT License (2018) kaztsuyu, Reification Incorporated</copyright>
     <tags>LLVM MSVS clang</tags>
-    <!--
     <dependencies>
-      <dependency id="" />
+      <dependency id="LLVM" version="7.0.0" />
     </dependencies>
-    -->
     <summary></summary>
   </metadata>
   <files>
     <file src="out\bin\clang.exe" target="assets\clang.exe" />
     <file src="assets\Toolset.props" target="assets\Toolset.props" />
-    <file src="assets\Toolset.targets" target="assets\Toolset.targets" />    
-    <file src="chocolatey_tools\Uninstall.ps1" target="tools\ChocolateyUninstall.ps1" />
+    <file src="assets\Toolset.targets" target="assets\Toolset.targets" />
+    <!-- target file names for these scripts are critical! -->
     <file src="chocolatey_tools\Install.ps1" target="tools\ChocolateyInstall.ps1" />
+    <file src="chocolatey_tools\Uninstall.ps1" target="tools\ChocolateyUninstall.ps1" />
   </files>
 </package>
