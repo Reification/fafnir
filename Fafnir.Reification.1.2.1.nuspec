@@ -16,7 +16,7 @@
     <copyright>Open Source, MIT License (2018) kaztsuyu, Reification Incorporated</copyright>
     <tags>LLVM MSVS clang</tags>
     <dependencies>
-      <dependency id="LLVM" version="7.0.0" />
+      <dependency id="LLVM" version="7.0" />
     </dependencies>
     <summary></summary>
   </metadata>
