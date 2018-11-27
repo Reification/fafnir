@@ -2,7 +2,7 @@
 <package  xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>    
     <id>Fafnir.Reification</id>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
     <title>MSVS 2017 Toolset integration for LLVM</title>
     <authors>https://github.com/kazatsuyu, bherrera@reification.io</authors>
     <owners>bherrera@reification.io</owners>

@@ -5,6 +5,7 @@ projDir=$(pwd)
 
 pkgName=$(echo *.nuspec)
 pkgName=${pkgName/.nuspec/}
+pkgVersion=$(sed 's:[<>]: :g' *.nuspec | gawk '/ version / { print $2; exit(0); }')
 
 if (which cmake 2>&1) > /dev/null; then
   echo > /dev/null
@@ -30,7 +31,7 @@ fi
 
 cd "$projDir"
 
-(rm -rf $pkgName/ $pkgName.zip $pkgName.nupkg 2>&1) > /dev/null
+(rm -rf ${pkgName}.${pkgVersion}/ ${pkgName}.${pkgVersion}.zip ${pkgName}.${pkgVersion}.nupkg 2>&1) > /dev/null
 
 if (which nuget 2>&1) > /dev/null; then
   projDirW=$(cygpath -w "$projDir")
@@ -38,12 +39,12 @@ if (which nuget 2>&1) > /dev/null; then
   #filter out the warnings about ChocolateyInstall.ps1 and ChocolateyUninstall.ps1 - they are actually incorrect
   (nuget pack -IncludeReferencedProjects -properties Configuration=Release 2>&1) | grep -v 'nstall\.ps1'
 else
-  echo "nuget not installed. skipping creation of $pkgName.nupkg."
+  echo "nuget not installed. skipping creation of ${pkgName}.${pkgVersion}.nupkg."
 fi
 
-cp -r out $pkgName
-cmake -E tar "cf" $pkgName.zip --format=zip $pkgName
+cp -r out ${pkgName}.${pkgVersion}
+cmake -E tar "cf" ${pkgName}.${pkgVersion}.zip --format=zip ${pkgName}.${pkgVersion}
 
-echo "Manual installation archive packaged as $pkgName.zip"
+echo "Manual installation archive packaged as ${pkgName}.${pkgVersion}.zip"
 
-(rm -rf $pkgName/ 2>&1) > /dev/null
+(rm -rf ${pkgName}.${pkgVersion}/ 2>&1) > /dev/null
