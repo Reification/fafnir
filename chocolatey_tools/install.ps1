@@ -49,16 +49,23 @@ function InstallArch ($arch) {
     if (!(Test-Path $targetPath)) {
         New-Item -ItemType Directory $targetPath | Out-Null
     }
+    
     Copy-Item "$assets\Toolset.targets" "$targetPath"
     $content = (Get-Content -Encoding UTF8 "$assets\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
     Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
+
+    if (!(Test-Path "$targetPath\bin")) {
+      New-Item -ItemType Directory "$targetPath\bin" | Out-Null
+    }
+
     if (Test-Path $assets\clang.exe) {
-        if (!(Test-Path "$targetPath\bin")) {
-            New-Item -ItemType Directory "$targetPath\bin" | Out-Null
-        }
         Copy-Item $assets\clang.exe "$targetPath\bin\cl.exe"
         [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang-cl.exe");
+    } else {
+      cmd /C "mklink `"$targetPath\bin\cl.exe`" `"$LLVMDirectory\bin\clang-cl.exe`""
     }
+    cmd /C "mklink `"$targetPath\bin\link.exe`" `"$LLVMDirectory\bin\lld-link.exe`""
+
     "Installed $($ToolsetName) for $($arch)"
 }
 

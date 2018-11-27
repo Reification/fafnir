@@ -5,11 +5,7 @@ $principal=new-object System.Security.Principal.WindowsPrincipal($id)
 $role=[System.Security.Principal.WindowsBuiltInRole]::Administrator
 if (!$principal.IsInRole($role)) {
    $pinfo = New-Object System.Diagnostics.ProcessStartInfo "powershell"
-   if($Noprompt) {
-    [string[]]$arguments = @("-ExecutionPolicy","Bypass",$myInvocation.MyCommand.Definition)
-   } else {
-    [string[]]$arguments = @("-NoExit", "-ExecutionPolicy","Bypass",$myInvocation.MyCommand.Definition)
-   }
+   [string[]]$arguments = @("-ExecutionPolicy","Bypass",$myInvocation.MyCommand.Definition)
 
    foreach ($key in $myInvocation.BoundParameters.Keys) {
        $arguments += ,@("-$key")
@@ -170,16 +166,24 @@ function InstallArch ($arch) {
     if (!(Test-Path $targetPath)) {
         New-Item -ItemType Directory $targetPath | Out-Null
     }
+    
     Copy-Item "$assets\Toolset.targets" "$targetPath"
     $content = (Get-Content -Encoding UTF8 "$assets\Toolset.props") -replace "{{LLVMDir}}",$LLVMDirectory
     Set-Content "$targetPath\Toolset.props" $content -Encoding UTF8 | Out-Null
+
+    if (!(Test-Path "$targetPath\bin")) {
+      New-Item -ItemType Directory "$targetPath\bin" | Out-Null
+    }
+
     if (Test-Path $bin) {
-        if (!(Test-Path "$targetPath\bin")) {
-            New-Item -ItemType Directory "$targetPath\bin" | Out-Null
-        }
         Copy-Item $bin "$targetPath\bin\cl.exe"
         [IO.File]::WriteAllText("$targetPath\bin\.target","$LLVMDirectory\bin\clang-cl.exe");
+    } else {
+      cmd /C "mklink `"$targetPath\bin\cl.exe`" `"$LLVMDirectory\bin\clang-cl.exe`""
     }
+
+    cmd /C "mklink `"$targetPath\bin\link.exe`" `"$LLVMDirectory\bin\lld-link.exe`""
+
     "Installed $($ToolsetName) for $($arch)"
 }
 
@@ -204,4 +208,8 @@ if($installing) {
     "Uninstalling LLVM Integration Toolset $($ToolsetName)"
     UninstallArch "Win32"
     UninstallArch "x64"    
+}
+
+if(!$NoPrompt) {
+  cmd /C pause
 }
