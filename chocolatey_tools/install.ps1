@@ -38,6 +38,11 @@ if(!(Test-Path $LLVMDirectory)) {
     Install-Failed "LLVM not installed at $($LLVMDirectory)."
 }
 
+#we need to create this file to prevent a shim for clang.exe from being created by choco install
+if (Test-Path $assets\clang.exe) {
+    New-Item "$assets\clang.exe.ignore" -type file -force | Out-Null
+}
+
 function InstallArch ($arch) {
     $platformDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms\$arch\PlatformToolsets";
     if (!(Test-Path $platformDir) -or $ToolsetName -eq "") {
@@ -64,7 +69,8 @@ function InstallArch ($arch) {
     } else {
       cmd /C "mklink `"$targetPath\bin\cl.exe`" `"$LLVMDirectory\bin\clang-cl.exe`""
     }
-    cmd /C "mklink `"$targetPath\bin\link.exe`" `"$LLVMDirectory\bin\lld-link.exe`""
+    #LLVM's link.exe work-alike lld-link.exe not ready for prime time
+    #cmd /C "mklink `"$targetPath\bin\link.exe`" `"$LLVMDirectory\bin\lld-link.exe`""
 
     "Installed $($ToolsetName) for $($arch)"
 }
