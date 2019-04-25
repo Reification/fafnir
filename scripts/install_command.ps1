@@ -33,10 +33,17 @@ function Get-Registry($key, $valuekey = "") {
     return $null
 }
 
-$VSInstallDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\SxS\VS7 "15.0"
+$VSInstallDir = Get-Registry "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\devenv.exe"
+
 if (!$VSInstallDir) {
-    $VSInstallDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\SxS\VS7 "15.0"
+  Install-Failed "Visual Studio 2017 or 2019 not installed."
 }
+
+$VSInstallDir = $VSInstallDir -replace '"'
+
+$VSInstallDir = Split-Path -Parent "${VSInstallDir}" | Split-Path -Parent | Split-Path -Parent
+
+
 $LLVMDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\LLVM\LLVM -ErrorAction 
 if (!$LLVMDir) {
     $LLVMDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\LLVM\LLVM
