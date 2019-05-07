@@ -22,7 +22,7 @@ function buildBin() {
 
   if cmake -G "Visual Studio 15 2017 Win64" ..; then
     echo > /dev/null
-  elif cmake -G "Visual Studio 16 2019" -A Win64 ..; then
+  elif cmake -G "Visual Studio 16 2019" ..; then
     echo > /dev/null
   else  
     exit 1
