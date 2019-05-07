@@ -43,6 +43,15 @@ $VSInstallDir = $VSInstallDir -replace '"'
 
 $VSInstallDir = Split-Path -Parent "${VSInstallDir}" | Split-Path -Parent | Split-Path -Parent
 
+$DefaultToolsetName = "v141_cl_llvm"
+
+$PlatformsDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms";
+
+#MSVS 2019
+if (!(Test-Path $PlatformsDir)) {
+    $PlatformsDir = "$VSInstallDir\MSBuild\Microsoft\VC\v160\Platforms";
+    $DefaultToolsetName = "v142_cl_llvm";
+}
 
 $LLVMDir = Get-Registry Registry::HKEY_LOCAL_MACHINE\SOFTWARE\LLVM\LLVM -ErrorAction 
 if (!$LLVMDir) {
@@ -52,10 +61,9 @@ if (!$LLVMDir) {
     $LLVMDir = "C:\Program Files\LLVM"
 }
 if (!$VSInstallDir) {
-    Install-Failed "Visual Studio 2017 is not found."
+    Install-Failed "Visual Studio 2017 or 2019 is not found."
 }
 
-$DefaultToolsetName = "v141_cl_llvm"
 $clangClPath = ""
 
 $reset = $false
@@ -163,7 +171,7 @@ $assets = "$rootDir\assets"
 $bin = "$rootDir\bin\clang.exe"
 
 function InstallArch ($arch) {
-    $platformDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms\$arch\PlatformToolsets";
+    $platformDir = "$PlatformsDir\$arch\PlatformToolsets";
     if (!(Test-Path $platformDir) -or $ToolsetName -eq "") {
         "Missing toolset directory for $($arch) or ToolsetName ($($ToolsetName)) not specified"
         return
@@ -195,8 +203,8 @@ function InstallArch ($arch) {
 }
 
 function UninstallArch($arch) {
-    $platformDir = "$VSInstallDir\Common7\IDE\VC\VCTargets\Platforms\$arch\PlatformToolsets";
-    $targetPath = "$platformDir\$ToolsetName"
+    $platformDir = "$PlatformsDir\$arch\PlatformToolsets";
+    $targetPath = "$PlatformDir\$ToolsetName"
     
     if ($ToolsetName -eq "" -or !(Test-Path $targetPath)) {
         "Toolset $($ToolsetName) for $($arch) was not installed."

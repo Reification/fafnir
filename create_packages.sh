@@ -7,29 +7,37 @@ pkgName=$(echo *.nuspec)
 pkgName=${pkgName/.nuspec/}
 pkgVersion=$(sed 's:[<>]: :g' *.nuspec | gawk '/ version / { print $2; exit(0); }')
 
-if (which cmake 2>&1) > /dev/null; then
-  echo > /dev/null
-else
-  echo "cmake not installed or not in PATH" 1>&2
-  exit 1
-fi
+PATH=/c/devtools/cmake-android/bin:${PATH}
 
-(mkdir build 2>&1) > /dev/null
-cd build
+function buildBin() {
+  if (which cmake 2>&1) > /dev/null; then
+    echo > /dev/null
+  else
+    echo "cmake not installed or not in PATH" 1>&2
+    exit 1
+  fi
 
-if cmake -G "Visual Studio 15 2017 Win64" ..; then
-  echo > /dev/null
-else
-  exit 1
-fi
+  (rm -rf build; mkdir build 2>&1) > /dev/null
+  cd build
 
-if cmake --build . --config Release --target INSTALL; then
-  echo > /dev/null
-else
-  exit 1
-fi
+  if cmake -G "Visual Studio 15 2017 Win64" ..; then
+    echo > /dev/null
+  elif cmake -G "Visual Studio 16 2019" -A Win64 ..; then
+    echo > /dev/null
+  else  
+    exit 1
+  fi
 
-cd "$projDir"
+  if cmake --build . --config Release --target INSTALL; then
+    echo > /dev/null
+  else
+    exit 1
+  fi
+
+  cd "$projDir"
+}
+
+buildBin
 
 (rm -rf ${pkgName}.${pkgVersion}/ ${pkgName}.${pkgVersion}.zip ${pkgName}.${pkgVersion}.nupkg 2>&1) > /dev/null
 
