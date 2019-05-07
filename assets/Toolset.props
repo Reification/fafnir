@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <LLVMDir>{{LLVMDir}}</LLVMDir>
-    <ExecutablePath>$(MSBuildThisFileDirectory)bin;$(LLVMDir)\bin;$(ExecutablePath)</ExecutablePath>
+    <ExecutablePath>$(MSBuildThisFileDirectory)bin;$(LLVMDir)\bin;$(ExecutablePath);$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
     <IncludePath>$(LLVMDir)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LLVMDir)\lib;$(LibraryPath)</LibraryPath>
     <ExcludePath>$(LLVMDir)\include;$(ExcludePath)</ExcludePath>
@@ -16,8 +16,8 @@
       <!-- /Gm- /Gm option not recognized or used by clang-cl, causing an annoying warning. -->
       <MinimalRebuild/>
       <!-- set predefined compile-time macro _MSC_VER to this version number when running -->
-      <AdditionalOptions Condition="'$(Platform)'=='Win32'">-m32 -fmsc-version=1915 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Platform)'=='x64'">-m64 -fmsc-version=1915 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'=='Win32'">-m32 -fmsc-version=1920 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'=='x64'">-m64 -fmsc-version=1920 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>
