@@ -93,7 +93,7 @@ std::string read_file( std::istream& in, const write_func& wf=&write_utf8_stream
   return read_file_impl( &read_utf8_stream, wf, in );
 }
 
-std::experimental::filesystem::path read_path( std::istream& in ) noexcept
+std::filesystem::path read_path( std::istream& in ) noexcept
 {
   std::string str = read_file( in, &write_utf16_stream );
   return {  reinterpret_cast<const wchar_t*>(str.data()),
@@ -175,14 +175,14 @@ int main(int argc, char**argv) {
 #endif
 
     auto path = get_bin_path() / ".target";
-    if (!std::experimental::filesystem::exists(path)) {
+    if (!std::filesystem::exists(path)) {
         std::wcerr << "error: " << path << " doesn't exist." << std::endl;
         return 1;
     }
     std::ifstream target(path, std::ios::binary);
     auto target_path = read_path(target);
     target.close();
-    if (!std::experimental::filesystem::exists(target_path)) {
+    if (!std::filesystem::exists(target_path)) {
         std::wcerr << "error: " << target_path << " doesn't exist." << std::endl;
         return 1;
     }

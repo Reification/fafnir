@@ -8,12 +8,12 @@
 
 namespace fafnir {
 
-inline std::experimental::filesystem::path get_bin_path() {
+inline std::filesystem::path get_bin_path() {
     auto module = GetModuleHandleW(L"fafnir_injection.dll");
     for(std::vector<wchar_t> buf(256);;buf.resize(buf.size() * 2)) {
         std::size_t size = GetModuleFileNameW(module, buf.data(), (DWORD)buf.size());
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-            std::experimental::filesystem::path path{buf.begin(), buf.begin() + size};
+            std::filesystem::path path{buf.begin(), buf.begin() + size};
             return path.parent_path();
         }
     }
