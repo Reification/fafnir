@@ -2,8 +2,8 @@
 <package  xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>    
     <id>Fafnir.Reification</id>
-    <version>1.2.2</version>
-    <title>MSVS 2017 Toolset integration for LLVM</title>
+    <version>1.3</version>
+    <title>MSVS 2019 Toolset integration for LLVM</title>
     <authors>https://github.com/kazatsuyu, bherrera@reification.io</authors>
     <owners>bherrera@reification.io</owners>
     <licenseUrl>https://raw.githubusercontent.com/Reification/fafnir/master/LICENSE</licenseUrl>
@@ -11,8 +11,8 @@
     <!-- url to an icon is only important if the package is going to be published on chocolatey.org -->
     <!-- <iconUrl></iconUrl> -->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>MSVS 2017 Toolset integration for LLVM</description>
-    <releaseNotes>Update LLVM 7.0</releaseNotes>
+    <description>MSVS 2019 Toolset integration for LLVM</description>
+    <releaseNotes>Update LLVM 9.0</releaseNotes>
     <copyright>Open Source, MIT License (2018) kaztsuyu, Reification Incorporated</copyright>
     <tags>LLVM MSVS clang</tags>
     <dependencies>
