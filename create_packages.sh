@@ -7,7 +7,10 @@ pkgName=$(echo *.nuspec)
 pkgName=${pkgName/.nuspec/}
 pkgVersion=$(sed 's:[<>]: :g' *.nuspec | gawk '/ version / { print $2; exit(0); }')
 
-PATH=/c/devtools/cmake-android/bin:${PATH}
+PATH=/c/devtools/cmake/bin:${PATH}
+
+which cmake
+cmake --version
 
 function buildBin() {
   if (which cmake 2>&1) > /dev/null; then
@@ -20,9 +23,9 @@ function buildBin() {
   (rm -rf build; mkdir build 2>&1) > /dev/null
   cd build
 
-  if cmake -G "Visual Studio 15 2017 Win64" ..; then
+  if cmake -G "Visual Studio 16 2019" ..; then
     echo > /dev/null
-  elif cmake -G "Visual Studio 16 2019" ..; then
+  elif cmake -G "Visual Studio 15 2017 Win64" ..; then
     echo > /dev/null
   else  
     exit 1
